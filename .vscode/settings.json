@@ -1,0 +1,14 @@
+{
+    // Extension Spellright Settings
+    "spellright.language": [
+        "en_GB"
+    ],
+    "spellright.documentTypes": [
+        "plaintext",
+        "markdown"
+    ],
+    "spellright.ignoreFiles": [
+        "**/.gitignore",
+        "**/.spellignore"
+    ],
+}

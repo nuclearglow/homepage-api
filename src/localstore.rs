@@ -1,3 +1,4 @@
+use log::info;
 use parking_lot::RwLock;
 use serde::Deserialize;
 use serde::Serialize;
@@ -19,7 +20,7 @@ pub struct Store {
 
 impl Store {
     pub fn new() -> Self {
-        println!("Creating localstore...");
+        info!("Initializing localstore");
         Store {
             list: Arc::new(RwLock::new(HashMap::new())),
         }
