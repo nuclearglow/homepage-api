@@ -19,9 +19,6 @@
                     "kind": "bin"
                 }
             },
-            "env": {
-                "RUST_LOG": "info"
-            },
             "args": [],
             "cwd": "${workspaceFolder}"
         },
