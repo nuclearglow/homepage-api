@@ -1,37 +1,39 @@
 #[macro_use]
 extern crate diesel;
 
-use diesel::mysql::MysqlConnection;
-use diesel::r2d2::{ConnectionManager, Pool};
-use dotenv::dotenv;
-use log::{debug, error, info, trace, warn};
-use pretty_env_logger;
-use std::env;
-use std::net::SocketAddrV4;
-use warp::Filter;
-
+mod api;
 mod data_access;
 mod errors;
 mod models;
 mod routes;
 mod schema;
 
-type MysqlPool = Pool<ConnectionManager<MysqlConnection>>;
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool};
+use dotenv::dotenv;
+use log::{debug, error, info, trace, warn};
+use pretty_env_logger;
+use serde::de::DeserializeOwned;
+use std::env;
+use std::net::SocketAddrV4;
+use warp::{reject, Filter};
 
-fn mysql_pool(db_url: &str) -> MysqlPool {
-    let manager = ConnectionManager::<MysqlConnection>::new(db_url);
-    Pool::new(manager).expect("MySQL connection pool could not be created")
+pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+
+fn pg_pool(db_url: &str) -> PgPool {
+    let manager = ConnectionManager::<PgConnection>::new(db_url);
+    Pool::new(manager).expect("Postgres connection pool could not be created")
 }
 
 use crate::data_access::DBAccessManager;
 use crate::errors::{ApiError, ErrorType};
 
-fn with_db_access_manager(
-    pool: MysqlPool,
+pub fn with_db_access_manager(
+    pool: PgPool,
 ) -> impl Filter<Extract = (DBAccessManager,), Error = warp::Rejection> + Clone {
     warp::any()
         .map(move || pool.clone())
-        .and_then(|pool: MysqlPool| async move {
+        .and_then(|pool: PgPool| async move {
             match pool.get() {
                 Ok(conn) => Ok(DBAccessManager::new(conn)),
                 Err(err) => Err(warp::reject::custom(ApiError::new(
@@ -40,6 +42,14 @@ fn with_db_access_manager(
                 ))),
             }
         })
+}
+
+// TODO: to package db
+pub fn with_json_body<T: DeserializeOwned + Send>(
+) -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone {
+    // When accepting a body, we want a JSON body
+    // (and to reject huge payloads)...
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
 #[tokio::main]
@@ -60,39 +70,23 @@ async fn main() {
     let server_url: SocketAddrV4 = server_url
         .parse()
         .expect("SERVER_IP field in .env invalid! Use a valid IPv4 Socket Address.");
-    info!("Warp starting on http://{:?}", server_url);
 
     // set up database
     let database_url = env::var("DATABASE_URL").expect("Add DATABASE_URL to yur .env file");
-    let mysql_pool = mysql_pool(database_url.as_str());
+    let pg_pool = pg_pool(database_url.as_str());
 
-    // GET /hello/warp => 200 OK with body "Hello, warp!"
-    let ping = warp::path!("hello" / String).map(|name| format!("Hello, {}!", name));
+    // set up the routes
+    // Add path prefix /api to all our routes
+    let routes = warp::path!("api" / ..)
+        .and(
+            routes::add_list(pg_pool.clone())
+                .or(routes::list_lists(pg_pool.clone()))
+                .or(routes::update_list(pg_pool.clone()))
+                .or(routes::delete_list(pg_pool)),
+        )
+        .recover(errors::handle_rejection);
 
-    // define URL paths and handler functions
-    // let add_item = warp::post()
-    //     .and(warp::path("list"))
-    //     .and(warp::path::end())
-    //     .and(json_body())
-    //     .and(store_filter.clone())
-    //     .and_then(routes::add_item);
-
-    // let get_items = warp::get()
-    //     .and(warp::path("list"))
-    //     .and(warp::path::end())
-    //     .and(store_filter.clone())
-    //     .and_then(routes::get_items);
-
-    // let delete_item = warp::delete()
-    //     .and(warp::path("list"))
-    //     .and(warp::path::end())
-    //     .and(json_body())
-    //     .and(store_filter.clone())
-    //     .and_then(routes::delete_item);
-
-    // assemble active routes
-    let routes = ping;
-    // .or(add_item).or(get_items).or(delete_item).with(log);
+    info!("Warp starting on http://{:?}", server_url);
 
     // serve async
     warp::serve(routes).run(server_url).await;

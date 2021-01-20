@@ -4,14 +4,14 @@ use diesel::r2d2::{ConnectionManager, PooledConnection};
 use crate::errors::{ApiError, ErrorType};
 use crate::models::{CreateListDTO, ListDTO};
 
-type PooledMysql = PooledConnection<ConnectionManager<MysqlConnection>>;
+type PooledPg = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub struct DBAccessManager {
-    connection: PooledMysql,
+    connection: PooledPg,
 }
 
 impl DBAccessManager {
-    pub fn new(connection: PooledMysql) -> DBAccessManager {
+    pub fn new(connection: PooledPg) -> DBAccessManager {
         DBAccessManager { connection }
     }
 
@@ -38,15 +38,12 @@ impl DBAccessManager {
         list_id: i64,
         new_title: String,
         new_info: String,
-        new_published: bool,
     ) -> Result<usize, ApiError> {
         use super::schema::lists::dsl::*;
 
         let updated = diesel::update(lists)
             .filter(id.eq(list_id))
-            .set(title.eq(new_title))
-            .set(info.eq(new_info))
-            .set(published.eq(new_published))
+            .set((title.eq(new_title), info.eq(new_info)))
             .execute(&self.connection)
             .map_err(|err| ApiError::from_diesel_err(err, "while updating list"))?;
 

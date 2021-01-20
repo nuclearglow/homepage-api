@@ -1,8 +1,7 @@
 table! {
     lists (id) {
-        id -> Integer,
+        id -> Int8,
         title -> Varchar,
         info -> Varchar,
-        published -> Bool,
     }
 }

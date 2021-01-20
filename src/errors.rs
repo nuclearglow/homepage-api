@@ -55,3 +55,44 @@ impl fmt::Display for ApiError {
 }
 
 impl Reject for ApiError {}
+
+use serde_derive::Serialize;
+use std::convert::Infallible;
+use warp::{Rejection, Reply};
+
+#[derive(Serialize)]
+struct ErrorMessage {
+    code: u16,
+    message: String,
+}
+
+pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
+    let code;
+    let message;
+
+    if err.is_not_found() {
+        code = warp::http::StatusCode::NOT_FOUND;
+        message = "Not Found";
+    } else if let Some(app_err) = err.find::<ApiError>() {
+        code = app_err.to_http_status();
+        message = app_err.message.as_str();
+    } else if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
+        code = warp::http::StatusCode::BAD_REQUEST;
+        message = "Invalid Body";
+    } else if let Some(_) = err.find::<warp::reject::MethodNotAllowed>() {
+        code = warp::http::StatusCode::METHOD_NOT_ALLOWED;
+        message = "Method Not Allowed";
+    } else {
+        // We should have expected this... Just log and say its a 500
+        eprintln!("unhandled rejection: {:?}", err);
+        code = warp::http::StatusCode::INTERNAL_SERVER_ERROR;
+        message = "Unhandled rejection";
+    }
+
+    let json = warp::reply::json(&ErrorMessage {
+        code: code.as_u16(),
+        message: message.into(),
+    });
+
+    Ok(warp::reply::with_status(json, code))
+}

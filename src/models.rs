@@ -1,21 +1,17 @@
-use super::schema::lists;
+use crate::schema::lists;
 
-use diesel::{Insertable, Queryable};
-use serde::Deserialize;
-use serde::Serialize;
+use serde_derive::Serialize;
 
-#[derive(Insertable, Serialize, Deserialize, Debug, Clone, Queryable)]
-#[table_name = "lists"]
-pub struct CreateListDTO {
-    pub id: i32,
+#[derive(Serialize, Debug, Clone, Queryable)]
+pub struct ListDTO {
+    pub id: i64,
     pub title: String,
     pub info: String,
-    pub published: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Queryable)]
-pub struct ListDTO {
+#[derive(Debug, Clone, Insertable)]
+#[table_name = "lists"]
+pub struct CreateListDTO {
     pub title: String,
     pub info: String,
-    pub published: bool,
 }
