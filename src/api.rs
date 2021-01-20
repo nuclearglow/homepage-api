@@ -1,4 +1,4 @@
-use crate::data_access::DBAccessManager;
+use crate::db;
 use crate::errors::ApiError;
 use crate::models::CreateListDTO;
 use serde::Serialize;
@@ -30,7 +30,7 @@ impl IdResponse {
 }
 
 pub async fn add_list(
-    db_manager: DBAccessManager,
+    db_manager: db::DBManager,
     new_list: AddList,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     log::info!("handling add list");
@@ -44,7 +44,7 @@ pub async fn add_list(
     respond(id_response, warp::http::StatusCode::CREATED)
 }
 
-pub async fn list_lists(db_manager: DBAccessManager) -> Result<impl warp::Reply, warp::Rejection> {
+pub async fn list_lists(db_manager: db::DBManager) -> Result<impl warp::Reply, warp::Rejection> {
     log::info!("handling list books");
 
     let result = db_manager.list_lists();
@@ -54,7 +54,7 @@ pub async fn list_lists(db_manager: DBAccessManager) -> Result<impl warp::Reply,
 
 pub async fn update_list(
     list_id: i64,
-    db_manager: DBAccessManager,
+    db_manager: db::DBManager,
     updated_list: AddList,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     log::info!("handling update status");
@@ -68,7 +68,7 @@ pub async fn update_list(
 
 pub async fn delete_list(
     list_id: i64,
-    db_manager: DBAccessManager,
+    db_manager: db::DBManager,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     log::info!("handling delete book");
 

@@ -6,13 +6,13 @@ use crate::models::{CreateListDTO, ListDTO};
 
 type PooledPg = PooledConnection<ConnectionManager<PgConnection>>;
 
-pub struct DBAccessManager {
+pub struct DBManager {
     connection: PooledPg,
 }
 
-impl DBAccessManager {
-    pub fn new(connection: PooledPg) -> DBAccessManager {
-        DBAccessManager { connection }
+impl DBManager {
+    pub fn new(connection: PooledPg) -> DBManager {
+        DBManager { connection }
     }
 
     pub fn create_list(&self, dto: CreateListDTO) -> Result<ListDTO, ApiError> {

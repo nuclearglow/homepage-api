@@ -2,7 +2,7 @@
 extern crate diesel;
 
 mod api;
-mod data_access;
+mod db;
 mod errors;
 mod models;
 mod routes;
@@ -22,23 +22,20 @@ pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 
 fn pg_pool(db_url: &str) -> PgPool {
     let manager = ConnectionManager::<PgConnection>::new(db_url);
-    Pool::new(manager).expect("Postgres connection pool could not be created")
+    return Pool::new(manager).expect("Postgres connection pool could not be created");
 }
-
-use crate::data_access::DBAccessManager;
-use crate::errors::{ApiError, ErrorType};
 
 pub fn with_db_access_manager(
     pool: PgPool,
-) -> impl Filter<Extract = (DBAccessManager,), Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = (db::DBManager,), Error = warp::Rejection> + Clone {
     warp::any()
         .map(move || pool.clone())
         .and_then(|pool: PgPool| async move {
             match pool.get() {
-                Ok(conn) => Ok(DBAccessManager::new(conn)),
-                Err(err) => Err(warp::reject::custom(ApiError::new(
+                Ok(conn) => Ok(db::DBManager::new(conn)),
+                Err(err) => Err(warp::reject::custom(errors::ApiError::new(
                     format!("Error getting connection from pool: {}", err.to_string()).as_str(),
-                    ErrorType::Internal,
+                    errors::ErrorType::Internal,
                 ))),
             }
         })
@@ -62,7 +59,7 @@ async fn main() {
         env::set_var("RUST_LOG", "info");
     }
     pretty_env_logger::init();
-    let log = warp::log("info");
+    info!("Log level set to {}", env::var("RUST_LOG").unwrap());
 
     // get the server address from dotenv
     let server_url: String =
