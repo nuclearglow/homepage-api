@@ -11,12 +11,12 @@ mod schema;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenv::dotenv;
-use log::{debug, error, info, trace, warn};
+use log::info;
 use pretty_env_logger;
 use serde::de::DeserializeOwned;
 use std::env;
 use std::net::SocketAddrV4;
-use warp::{reject, Filter};
+use warp::Filter;
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 
@@ -51,7 +51,7 @@ pub fn with_json_body<T: DeserializeOwned + Send>(
 
 #[tokio::main]
 async fn main() {
-    // init dotenv
+    // init .env
     dotenv().ok();
 
     // init logging
@@ -76,11 +76,16 @@ async fn main() {
     // Add path prefix /api to all our routes
     let routes = warp::path!("api" / ..)
         .and(
+            // list routes
             routes::add_list(pg_pool.clone())
                 .or(routes::get_lists(pg_pool.clone()))
                 .or(routes::get_list(pg_pool.clone()))
                 .or(routes::update_list(pg_pool.clone()))
-                .or(routes::delete_list(pg_pool)),
+                .or(routes::delete_list(pg_pool.clone()))
+                // item routes
+                .or(routes::add_item(pg_pool.clone()))
+                .or(routes::update_item(pg_pool.clone()))
+                .or(routes::delete_item(pg_pool)),
         )
         .recover(errors::handle_rejection);
 

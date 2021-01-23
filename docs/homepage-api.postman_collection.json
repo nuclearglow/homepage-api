@@ -7,27 +7,7 @@
 	},
 	"item": [
 		{
-			"name": "http://localhost:9090/hello/world",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:9090/hello/world",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "9090",
-					"path": [
-						"hello",
-						"world"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "http://localhost:9090/list",
+			"name": "http://localhost:9090/api/lists",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -50,21 +30,61 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:9090/list",
+					"raw": "http://localhost:9090/api/lists",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9090",
 					"path": [
-						"list"
+						"api",
+						"lists"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "http://localhost:9090/list",
+			"name": "http://localhost:9090/api/list/:id",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"type": "text",
+						"value": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/api/list/3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"api",
+						"list",
+						"3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:9090/api/list",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -76,7 +96,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"test\",\n    \"quantity\": 32\n}",
+					"raw": "{\n    \"title\": \"kill\",\n    \"info\": \"monthly kills\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -84,13 +104,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:9090/list",
+					"raw": "http://localhost:9090/api/list",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9090",
 					"path": [
+						"api",
 						"list"
 					]
 				}
@@ -98,7 +119,43 @@
 			"response": []
 		},
 		{
-			"name": "http://localhost:9090/list",
+			"name": "http://localhost:9090/api/list/:id",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"glglgl\",\n    \"info\": \"updated items\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/api/list/10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"api",
+						"list",
+						"10"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:9090/api/list/:id",
 			"request": {
 				"method": "DELETE",
 				"header": [
@@ -110,7 +167,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"test\",\n    \"quantity\": 64\n}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -118,14 +175,123 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:9090/list",
+					"raw": "http://localhost:9090/api/list/11",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "9090",
 					"path": [
-						"list"
+						"api",
+						"list",
+						"11"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:9090/api/item",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"list_id\": 3,\n    \"title\": \"gurke\",\n    \"amount\": 2\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/api/item",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"api",
+						"item"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:9090/api/item/:id",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"newitem\",\n    \"amount\": 2\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/api/item/3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"api",
+						"item",
+						"3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:9090/api/item/:id",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "",
+						"type": "text",
+						"value": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9090/api/item/4",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9090",
+					"path": [
+						"api",
+						"item",
+						"4"
 					]
 				}
 			},

@@ -57,3 +57,35 @@ pub fn delete_list(
         .and(with_db_access_manager(pool))
         .and_then(api::delete_list)
 }
+
+/// POST /item
+pub fn add_item(
+    pool: PgPool,
+) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("item") // Match /item path
+        .and(warp::post()) // Match POST method
+        .and(with_db_access_manager(pool)) // Add DBManager to params tuple
+        .and(with_json_body::<api::AddItem>()) // Try to deserialize JSON body to AddList
+        .and_then(api::add_item) // Pass the params touple to the handler function
+}
+
+/// PUT /item/:id/
+pub fn update_item(
+    pool: PgPool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("item" / i64)
+        .and(warp::put())
+        .and(with_db_access_manager(pool))
+        .and(with_json_body::<api::UpdateItem>()) // Try to deserialize JSON body to AddList
+        .and_then(api::update_item)
+}
+
+/// DELETE /item/:id
+pub fn delete_item(
+    pool: PgPool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("item" / i64)
+        .and(warp::delete())
+        .and(with_db_access_manager(pool))
+        .and_then(api::delete_item)
+}
