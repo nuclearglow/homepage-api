@@ -77,7 +77,8 @@ async fn main() {
     let routes = warp::path!("api" / ..)
         .and(
             routes::add_list(pg_pool.clone())
-                .or(routes::list_lists(pg_pool.clone()))
+                .or(routes::get_lists(pg_pool.clone()))
+                .or(routes::get_list(pg_pool.clone()))
                 .or(routes::update_list(pg_pool.clone()))
                 .or(routes::delete_list(pg_pool)),
         )

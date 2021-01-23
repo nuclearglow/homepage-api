@@ -25,12 +25,32 @@ impl DBManager {
         // if error occurred map it to ApiError
     }
 
-    pub fn list_lists(&self) -> Result<Vec<ListDTO>, ApiError> {
+    /// retrieve all lists from the db
+    pub fn get_lists(&self) -> Result<Vec<ListDTO>, ApiError> {
         use super::schema::lists::dsl::*;
 
         lists
             .load(&self.connection)
             .map_err(|err| ApiError::from_diesel_err(err, "while listing lists"))
+    }
+
+    pub fn get_list(&self, list_id: i64) -> Result<ListDTO, ApiError> {
+        use super::schema::lists::dsl::*;
+
+        match lists
+            .filter(id.eq(list_id))
+            .load::<ListDTO>(&self.connection)
+        {
+            Ok(list) => {
+                if list.is_empty() {
+                    return Err(ApiError::new("No list found", ErrorType::NotFound));
+                }
+                return Ok(list[0].clone());
+            }
+            Err(err) => {
+                return Err(ApiError::from_diesel_err(err, "while loading single list"));
+            }
+        }
     }
 
     pub fn update_list(

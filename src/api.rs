@@ -39,15 +39,26 @@ pub async fn add_list(
 
     let id_response = db_manager
         .create_list(create_list_dto)
-        .map(|book| IdResponse::new(book.id));
+        .map(|list| IdResponse::new(list.id));
 
     respond(id_response, warp::http::StatusCode::CREATED)
 }
 
-pub async fn list_lists(db_manager: db::DBManager) -> Result<impl warp::Reply, warp::Rejection> {
-    log::info!("handling list books");
+pub async fn get_lists(db_manager: db::DBManager) -> Result<impl warp::Reply, warp::Rejection> {
+    log::info!("handling get lists");
 
-    let result = db_manager.list_lists();
+    let result = db_manager.get_lists();
+
+    respond(result, warp::http::StatusCode::OK)
+}
+
+pub async fn get_list(
+    list_id: i64,
+    db_manager: db::DBManager,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    log::info!("handling get single list");
+
+    let result = db_manager.get_list(list_id);
 
     respond(result, warp::http::StatusCode::OK)
 }
@@ -70,7 +81,7 @@ pub async fn delete_list(
     list_id: i64,
     db_manager: db::DBManager,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    log::info!("handling delete book");
+    log::info!("handling delete list");
 
     let result = db_manager.delete_list(list_id).map(|_| -> () { () });
 

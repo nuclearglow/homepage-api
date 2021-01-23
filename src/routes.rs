@@ -5,43 +5,54 @@ use crate::PgPool;
 
 use warp::Filter;
 
+/// Admin: Get all lists
 /// GET /lists
-pub fn list_lists(
+pub fn get_lists(
     pool: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("lists")
         .and(warp::get())
         .and(with_db_access_manager(pool))
-        .and_then(api::list_lists)
+        .and_then(api::get_lists)
 }
 
-/// POST /lists
+/// GET /list/:id
+pub fn get_list(
+    pool: PgPool,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("list" / i64)
+        .and(warp::get())
+        .and(with_db_access_manager(pool))
+        .and_then(api::get_list)
+}
+
+/// POST /list
 pub fn add_list(
     pool: PgPool,
 ) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("lists") // Match /books path
+    warp::path!("list") // Match /lists path
         .and(warp::post()) // Match POST method
         .and(with_db_access_manager(pool)) // Add DBAccessManager to params tuple
-        .and(with_json_body::<api::AddList>()) // Try to deserialize JSON body to AddBook
+        .and(with_json_body::<api::AddList>()) // Try to deserialize JSON body to AddList
         .and_then(api::add_list) // Pass the params touple to the handler function
 }
 
-/// PUT /lists/:id
+/// PUT /list/:id/
 pub fn update_list(
     pool: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("lists" / i64)
+    warp::path!("list" / i64)
         .and(warp::put())
         .and(with_db_access_manager(pool))
-        .and(with_json_body::<api::AddList>()) // Try to deserialize JSON body to AddBook
+        .and(with_json_body::<api::AddList>()) // Try to deserialize JSON body to AddList
         .and_then(api::update_list)
 }
 
-/// DELETE /lists/:id
+/// DELETE /list/:id
 pub fn delete_list(
     pool: PgPool,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("lists" / i64)
+    warp::path!("list" / i64)
         .and(warp::delete())
         .and(with_db_access_manager(pool))
         .and_then(api::delete_list)
