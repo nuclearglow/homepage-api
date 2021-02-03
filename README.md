@@ -9,21 +9,17 @@ my website rust microservice api
 
 ## Setup
 
-* create a `.env` file with the following contents and replace the <>:
-
-```
-SERVER_URL=<your_server_url:your_port>
-DATABASE_URL=mysql://api:api@localhost:3307/api
-```
-
-* install diesel
-
-Use this [guide](https://github.com/diesel-rs/diesel/blob/master/guide_drafts/backend_installation.md#mysql):
-
 * fire up postgresql
 
 ```
 docker run -p 5432:5432 --rm -e POSTGRES_PASSWORD=password postgres:12
+```
+
+* create a `.env` file with the following contents and replace the <> and your database string:
+
+```
+SERVER_URL=<your_server_url:your_port>
+DATABASE_URL=postgres://postgres:password@localhost:5432/api
 ```
 
 * initialize database and run migrations
