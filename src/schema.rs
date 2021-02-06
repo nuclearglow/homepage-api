@@ -11,11 +11,8 @@ table! {
     lists (id) {
         id -> Int8,
         title -> Varchar,
-        info -> Varchar,
+        subtitle -> Varchar,
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    items,
-    lists,
-);
+allow_tables_to_appear_in_same_query!(items, lists,);

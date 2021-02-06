@@ -57,13 +57,13 @@ impl DBManager {
         &self,
         list_id: i64,
         new_title: String,
-        new_info: String,
+        new_subtitle: String,
     ) -> Result<usize, ApiError> {
         use super::schema::lists::dsl::*;
 
         let updated = diesel::update(lists)
             .filter(id.eq(list_id))
-            .set((title.eq(new_title), info.eq(new_info)))
+            .set((title.eq(new_title), subtitle.eq(new_subtitle)))
             .execute(&self.connection)
             .map_err(|err| ApiError::from_diesel_err(err, "while updating list"))?;
 

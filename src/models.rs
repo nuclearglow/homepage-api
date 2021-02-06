@@ -8,14 +8,14 @@ use serde_derive::Serialize;
 pub struct List {
     pub id: i64,
     pub title: String,
-    pub info: String,
+    pub subtitle: String,
 }
 
 #[derive(Debug, Clone, Insertable)]
 #[table_name = "lists"]
 pub struct CreateList {
     pub title: String,
-    pub info: String,
+    pub subtitle: String,
 }
 
 #[derive(Serialize, Debug, Clone, Queryable, Identifiable, Associations)]

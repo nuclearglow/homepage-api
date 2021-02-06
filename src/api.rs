@@ -8,14 +8,14 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Clone)]
 pub struct AddList {
     pub title: String,
-    pub info: String,
+    pub subtitle: String,
 }
 
 impl AddList {
     pub fn to_dto(&self) -> CreateList {
         CreateList {
             title: self.title.clone(),
-            info: self.info.clone(),
+            subtitle: self.subtitle.clone(),
         }
     }
 }
@@ -48,7 +48,7 @@ pub struct UpdateItem {
 pub struct ListWithItems {
     pub list_id: i64,
     pub title: String,
-    pub info: String,
+    pub subtitle: String,
     pub items: Vec<Item>,
 }
 
@@ -57,7 +57,7 @@ impl ListWithItems {
         ListWithItems {
             list_id: list.id,
             title: list.title,
-            info: list.info,
+            subtitle: list.subtitle,
             items,
         }
     }
@@ -85,7 +85,7 @@ pub async fn add_list(
         .create_list(create_list_dto)
         .map(|list| IdResponse::new(list.id));
 
-    respond(id_response, warp::http::StatusCode::CREATED)
+    return respond(id_response, warp::http::StatusCode::CREATED);
 }
 
 pub async fn get_lists(db_manager: db::DBManager) -> Result<impl warp::Reply, warp::Rejection> {
@@ -93,7 +93,7 @@ pub async fn get_lists(db_manager: db::DBManager) -> Result<impl warp::Reply, wa
 
     let result = db_manager.get_lists();
 
-    respond(result, warp::http::StatusCode::OK)
+    return respond(result, warp::http::StatusCode::OK);
 }
 
 pub async fn get_list(
@@ -104,12 +104,16 @@ pub async fn get_list(
 
     // retrieve list and associated items from db
     let result = db_manager.get_list(list_id);
-    // destructure
-    let (list, items) = result.unwrap();
-    // return as list with items
-    let result = Ok(ListWithItems::new(list, items));
-
-    respond(result, warp::http::StatusCode::OK)
+    match result {
+        // list is found, return data and 200
+        Ok((list, items)) => {
+            // return as list with items
+            let result = Ok(ListWithItems::new(list, items));
+            return respond(result, warp::http::StatusCode::OK);
+        }
+        // list was not found, return 404
+        Err(err) => return respond(Err(err), warp::http::StatusCode::NOT_FOUND),
+    };
 }
 
 pub async fn update_list(
@@ -120,10 +124,10 @@ pub async fn update_list(
     log::info!("handling update status");
 
     let id_response = db_manager
-        .update_list(list_id, updated_list.title, updated_list.info)
+        .update_list(list_id, updated_list.title, updated_list.subtitle)
         .map(|_| IdResponse::new(list_id));
 
-    respond(id_response, warp::http::StatusCode::OK)
+    return respond(id_response, warp::http::StatusCode::OK);
 }
 
 pub async fn delete_list(
@@ -134,7 +138,7 @@ pub async fn delete_list(
 
     let result = db_manager.delete_list(list_id).map(|_| -> () { () });
 
-    respond(result, warp::http::StatusCode::NO_CONTENT)
+    return respond(result, warp::http::StatusCode::NO_CONTENT);
 }
 
 pub async fn add_item(
@@ -149,7 +153,7 @@ pub async fn add_item(
         .create_item(create_item)
         .map(|list| IdResponse::new(list.id));
 
-    respond(id_response, warp::http::StatusCode::CREATED)
+    return respond(id_response, warp::http::StatusCode::CREATED);
 }
 
 pub async fn update_item(
@@ -163,7 +167,7 @@ pub async fn update_item(
         .update_item(item_id, updated_item.title, updated_item.amount)
         .map(|_| IdResponse::new(item_id));
 
-    respond(id_response, warp::http::StatusCode::OK)
+    return respond(id_response, warp::http::StatusCode::OK);
 }
 
 pub async fn delete_item(
@@ -174,7 +178,7 @@ pub async fn delete_item(
 
     let result = db_manager.delete_item(item_id).map(|_| -> () { () });
 
-    respond(result, warp::http::StatusCode::NO_CONTENT)
+    return respond(result, warp::http::StatusCode::NO_CONTENT);
 }
 
 fn respond<T: Serialize>(
