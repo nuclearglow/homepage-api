@@ -46,7 +46,7 @@ pub struct UpdateItem {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct ListWithItems {
-    pub list_id: i64,
+    pub id: i64,
     pub title: String,
     pub subtitle: String,
     pub items: Vec<Item>,
@@ -55,7 +55,7 @@ pub struct ListWithItems {
 impl ListWithItems {
     pub fn new(list: List, items: Vec<Item>) -> ListWithItems {
         ListWithItems {
-            list_id: list.id,
+            id: list.id,
             title: list.title,
             subtitle: list.subtitle,
             items,
