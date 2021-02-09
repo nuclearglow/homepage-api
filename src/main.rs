@@ -12,6 +12,7 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenv::dotenv;
 use log::info;
+use log::LevelFilter;
 use pretty_env_logger;
 use serde::de::DeserializeOwned;
 use std::env;
@@ -58,7 +59,14 @@ async fn main() {
     if env::var_os("RUST_LOG").is_none() {
         env::set_var("RUST_LOG", "info");
     }
-    pretty_env_logger::init();
+
+    pretty_env_logger::formatted_timed_builder()
+        // https://docs.rs/env_logger/0.5.0-rc.1/env_logger/struct.Builder.html
+        // .target(Target::Stdout)
+        .filter(None, LevelFilter::Info)
+        .init();
+
+    // pretty_env_logger::init();
     info!("Log level set to {}", env::var("RUST_LOG").unwrap());
 
     // get the server address from dotenv
