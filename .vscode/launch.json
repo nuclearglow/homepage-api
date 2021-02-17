@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'homepage-api'",
+            "name": "Debug executable 'retrolist'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=homepage-api",
-                    "--package=homepage-api"
+                    "--bin=retrolist",
+                    "--package=retrolist"
                 ],
                 "filter": {
-                    "name": "homepage-api",
+                    "name": "retrolist",
                     "kind": "bin"
                 }
             },
@@ -29,16 +29,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'homepage-api'",
+            "name": "Debug unit tests in executable 'retrolist'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=homepage-api",
-                    "--package=homepage-api"
+                    "--bin=retrolist",
+                    "--package=retrolist"
                 ],
                 "filter": {
-                    "name": "homepage-api",
+                    "name": "retrolist",
                     "kind": "bin"
                 }
             },

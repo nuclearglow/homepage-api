@@ -1,5 +1,5 @@
 [package]
-name = "homepage-api"
+name = "retrolist"
 version = "0.1.0"
 authors = ["Sven Vowe <svenvowe@gmail.com>"]
 edition = "2018"
