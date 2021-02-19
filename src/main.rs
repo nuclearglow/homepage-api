@@ -7,6 +7,7 @@ mod errors;
 mod models;
 mod routes;
 mod schema;
+mod webauthn;
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -17,9 +18,11 @@ use pretty_env_logger;
 use serde::de::DeserializeOwned;
 use std::env;
 use std::net::SocketAddrV4;
+use std::sync::Arc;
 use warp::Filter;
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+use webauthn_rs::ephemeral::WebauthnEphemeralConfig;
 
 fn pg_pool(db_url: &str) -> PgPool {
     let manager = ConnectionManager::<PgConnection>::new(db_url);
@@ -80,12 +83,21 @@ async fn main() {
     let database_url = env::var("DATABASE_URL").expect("Add DATABASE_URL to yur .env file");
     let pg_pool = pg_pool(database_url.as_str());
 
+    // set up webauthn
+    let wan_c =
+        WebauthnEphemeralConfig::new("localhost", "http://localhost:8888", "localhost", None);
+
+    let wan = crate::webauthn::actors::WebauthnActor::new(wan_c);
+    let actor = Arc::new(wan);
+
     // set up the routes
     // Add path prefix /api to all our routes
     let routes = warp::path!("api" / ..)
         .and(
-            // list routes
-            routes::add_list(pg_pool.clone())
+            // webauthn routes
+            crate::webauthn::routes::challenge_register(actor)
+                // list routes
+                .or(routes::add_list(pg_pool.clone()))
                 .or(routes::get_lists(pg_pool.clone()))
                 .or(routes::get_list(pg_pool.clone()))
                 .or(routes::update_list(pg_pool.clone()))
