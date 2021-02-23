@@ -1,17 +1,27 @@
+use serde_derive::Serialize;
+use std::convert::Infallible;
 use std::fmt;
 use warp::reject::Reject;
+use warp::{Rejection, Reply};
 
 #[derive(Debug)]
 pub enum ErrorType {
     NotFound,
     Internal,
     BadRequest,
+    Webauthn,
 }
 
 #[derive(Debug)]
 pub struct ApiError {
     pub err_type: ErrorType,
     pub message: String,
+}
+
+#[derive(Serialize)]
+struct ErrorMessage {
+    code: u16,
+    message: String,
 }
 
 impl ApiError {
@@ -27,6 +37,7 @@ impl ApiError {
             ErrorType::NotFound => warp::http::StatusCode::NOT_FOUND,
             ErrorType::Internal => warp::http::StatusCode::INTERNAL_SERVER_ERROR,
             ErrorType::BadRequest => warp::http::StatusCode::BAD_REQUEST,
+            ErrorType::Webauthn => warp::http::StatusCode::UNAUTHORIZED,
         }
     }
 
@@ -44,6 +55,16 @@ impl ApiError {
             },
         )
     }
+
+    pub fn from_webauthn_error(err: webauthn_rs::error::WebauthnError, context: &str) -> ApiError {
+        ApiError::new(
+            format!("{}: {}", context, err.to_string()).as_str(),
+            match err {
+                // TODO: handle some specific error here like InvalidUsername
+                _ => ErrorType::Webauthn,
+            },
+        )
+    }
 }
 
 impl std::error::Error for ApiError {}
@@ -55,16 +76,6 @@ impl fmt::Display for ApiError {
 }
 
 impl Reject for ApiError {}
-
-use serde_derive::Serialize;
-use std::convert::Infallible;
-use warp::{Rejection, Reply};
-
-#[derive(Serialize)]
-struct ErrorMessage {
-    code: u16,
-    message: String,
-}
 
 pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     let code;

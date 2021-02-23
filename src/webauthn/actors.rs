@@ -7,7 +7,6 @@ use webauthn_rs::proto::{
 use webauthn_rs::{AuthenticationState, RegistrationState, Webauthn};
 
 use async_std::sync::Mutex;
-use log::info;
 use lru::LruCache;
 use std::collections::BTreeMap;
 
@@ -36,12 +35,59 @@ impl WebauthnActor {
         &self,
         username: String,
     ) -> WebauthnResult<CreationChallengeResponse> {
-        info!("Webauthn: Challenge Register -> {:?}", username);
+        log::info!("Webauthn: Challenge Register -> {:?}", username);
         let (ccr, rs) = self
             .wan
             .generate_challenge_register(&username, Some(UserVerificationPolicy::Discouraged))?;
         self.reg_chals.lock().await.put(username.into_bytes(), rs);
-        info!("Webauthn: Challenge Register Complete -> {:?}", ccr);
+        log::info!("Webauthn: Challenge Register Complete -> {:?}", ccr);
         Ok(ccr)
+    }
+
+    pub async fn register(
+        &self,
+        username: &String,
+        reg: &RegisterPublicKeyCredential,
+    ) -> WebauthnResult<()> {
+        log::debug!(
+            "handle Register -> (username: {:?}, reg: {:?})",
+            username,
+            reg
+        );
+
+        let username = username.as_bytes().to_vec();
+
+        let rs = self
+            .reg_chals
+            .lock()
+            .await
+            .pop(&username)
+            .ok_or(WebauthnError::ChallengeNotFound)?;
+
+        let mut creds = self.creds.lock().await;
+        let r = match creds.get_mut(&username) {
+            Some(ucreds) => self
+                .wan
+                .register_credential(reg, rs, |cred_id| Ok(ucreds.contains_key(cred_id)))
+                .map(|cred| {
+                    let cred_id = cred.cred_id.clone();
+                    ucreds.insert(cred_id, cred);
+                }),
+            None => {
+                let r = self
+                    .wan
+                    .register_credential(reg, rs, |_| Ok(false))
+                    .map(|cred| {
+                        let mut t = BTreeMap::new();
+                        let credential_id = cred.cred_id.clone();
+                        t.insert(credential_id, cred);
+                        creds.insert(username, t);
+                    });
+                log::debug!("{:?}", self.creds);
+                r
+            }
+        };
+        log::debug!("complete Register -> {:?}", r);
+        return r;
     }
 }

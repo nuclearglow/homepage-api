@@ -2,6 +2,10 @@ use crate::errors::ApiError;
 use crate::webauthn::actors::*;
 use serde::Serialize;
 use std::sync::Arc;
+use webauthn_rs::proto::{
+    CreationChallengeResponse, Credential, CredentialID, PublicKeyCredential,
+    RegisterPublicKeyCredential, RequestChallengeResponse, UserId, UserVerificationPolicy,
+};
 
 pub async fn challenge_register(
     username: String,
@@ -12,19 +16,31 @@ pub async fn challenge_register(
     let response = actor.challenge_register(username).await;
     match response {
         Ok(challenge) => return respond(Ok(challenge), warp::http::StatusCode::OK),
-        Err(err) =>
-        // TODO: from_webauthn_error just like with diesel
-        {
-            log::error!("Webauthn Error: {:?}", err);
+        Err(err) => {
             return respond(
-                Err(ApiError::new(
-                    "Webauthn Error",
-                    crate::errors::ErrorType::BadRequest,
-                )),
+                Err(ApiError::from_webauthn_error(err, "challenge register")),
                 warp::http::StatusCode::UNAUTHORIZED,
-            );
+            )
         }
-    };
+    }
+}
+
+pub async fn register(
+    username: String,
+    actor: Arc<WebauthnActor>,
+    reg: RegisterPublicKeyCredential,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    log::info!("handling register");
+    let response = actor.register(&username, &reg).await;
+    match response {
+        Ok(result) => return respond(Ok(result), warp::http::StatusCode::OK),
+        Err(err) => {
+            return respond(
+                Err(ApiError::from_webauthn_error(err, "register")),
+                warp::http::StatusCode::UNAUTHORIZED,
+            )
+        }
+    }
 }
 
 fn respond<T: Serialize>(
@@ -37,7 +53,7 @@ fn respond<T: Serialize>(
             status,
         )),
         Err(err) => {
-            log::error!("Error while trying to respond: {}", err.to_string());
+            log::error!("Error while responding in Webauthn: {}", err.to_string());
             Err(warp::reject::custom(err))
         }
     }

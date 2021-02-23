@@ -12,12 +12,13 @@ mod webauthn;
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenv::dotenv;
-use log::info;
 use log::LevelFilter;
+use log::*;
 use pretty_env_logger;
 use serde::de::DeserializeOwned;
 use std::env;
 use std::net::SocketAddrV4;
+use std::str::FromStr;
 use std::sync::Arc;
 use warp::Filter;
 
@@ -63,14 +64,24 @@ async fn main() {
         env::set_var("RUST_LOG", "info");
     }
 
+    let log_level: String = env::var("RUST_LOG").unwrap();
+    let level_filter: LevelFilter = match LevelFilter::from_str(&log_level) {
+        Ok(level) => level,
+        Err(_) => LevelFilter::Debug,
+    };
+
     pretty_env_logger::formatted_timed_builder()
         // https://docs.rs/env_logger/0.5.0-rc.1/env_logger/struct.Builder.html
-        // .target(Target::Stdout)
-        .filter(None, LevelFilter::Info)
+        // TODO: .target(Target::Stdout) TODO: in prod mode, should log to file
+        .filter(None, level_filter)
         .init();
 
-    // pretty_env_logger::init();
-    info!("Log level set to {}", env::var("RUST_LOG").unwrap());
+    info!("Log level set to {}", level_filter);
+
+    debug!("Using Environment");
+    for (key, value) in env::vars() {
+        debug!("{}: {}", key, value);
+    }
 
     // get the server address from dotenv
     let server_url: String =
@@ -83,31 +94,52 @@ async fn main() {
     let database_url = env::var("DATABASE_URL").expect("Add DATABASE_URL to yur .env file");
     let pg_pool = pg_pool(database_url.as_str());
 
-    // set up webauthn
-    let wan_c =
-        WebauthnEphemeralConfig::new("localhost", "http://localhost:8888", "localhost", None);
+    // set up Webauthn relying party parameters
+    let webauthn_rp_name = env::var("WEBAUTHN_RELYING_PARTY_NAME")
+        .expect("Add WEBAUTHN_RELYING_PARTY_NAME to yur .env file");
+    info!("Webauthn Relying Party Name {:?} ", webauthn_rp_name);
+    let webauthn_rp_origin = env::var("WEBAUTHN_RELYING_PARTY_ORIGIN")
+        .expect("Add WEBAUTHN_RELYING_PARTY_ORIGIN to yur .env file");
+    info!("Webauthn Relying Party Origin {:?} ", webauthn_rp_origin);
+    let webauthn_rp_id = env::var("WEBAUTHN_RELYING_PARTY_ID")
+        .expect("Add WEBAUTHN_RELYING_PARTY_ID to yur .env file");
+    info!("Webauthn Relying Party Id {:?} ", webauthn_rp_id);
 
+    // set up Webauthn Ephemeral Config
+    let wan_c = WebauthnEphemeralConfig::new(
+        webauthn_rp_name.as_str(),
+        webauthn_rp_origin.as_str(),
+        webauthn_rp_id.as_str(),
+        None,
+    );
+
+    // create Actor
     let wan = crate::webauthn::actors::WebauthnActor::new(wan_c);
     let actor = Arc::new(wan);
 
     // set up the routes
-    // Add path prefix /api to all our routes
-    let routes = warp::path!("api" / ..)
-        .and(
-            // webauthn routes
-            crate::webauthn::routes::challenge_register(actor)
-                // list routes
-                .or(routes::add_list(pg_pool.clone()))
-                .or(routes::get_lists(pg_pool.clone()))
-                .or(routes::get_list(pg_pool.clone()))
-                .or(routes::update_list(pg_pool.clone()))
-                .or(routes::delete_list(pg_pool.clone()))
-                // item routes
-                .or(routes::add_item(pg_pool.clone()))
-                .or(routes::update_item(pg_pool.clone()))
-                .or(routes::delete_item(pg_pool)),
-        )
-        .recover(errors::handle_rejection);
+
+    // Webauthn: Add path prefix /auth to all these routes
+    let auth_routes = warp::path!("auth" / ..).and(
+        webauthn::routes::challenge_register(actor.clone()).or(webauthn::routes::register(actor)),
+    );
+
+    // API: Add path prefix /api to all our routes
+    let api_routes = warp::path!("api" / ..).and(
+        // list routes
+        routes::add_list(pg_pool.clone())
+            .or(routes::get_lists(pg_pool.clone()))
+            .or(routes::get_list(pg_pool.clone()))
+            .or(routes::update_list(pg_pool.clone()))
+            .or(routes::delete_list(pg_pool.clone()))
+            // item routes
+            .or(routes::add_item(pg_pool.clone()))
+            .or(routes::update_item(pg_pool.clone()))
+            .or(routes::delete_item(pg_pool)),
+    );
+
+    // assemble all routes, add error handler
+    let routes = auth_routes.or(api_routes).recover(errors::handle_rejection);
 
     info!("Warp starting on http://{:?}", server_url);
 
