@@ -4,6 +4,7 @@ use diesel::r2d2::{ConnectionManager, PooledConnection};
 use crate::errors::{ApiError, ErrorType};
 use crate::models::{CreateItem, Item};
 use crate::models::{CreateList, List};
+use crate::models::{CreateUser, User};
 
 type PooledPg = PooledConnection<ConnectionManager<PgConnection>>;
 
@@ -14,6 +15,31 @@ pub struct DBManager {
 impl DBManager {
     pub fn new(connection: PooledPg) -> DBManager {
         DBManager { connection }
+    }
+
+    pub fn create_user(&self, dto: CreateUser) -> Result<User, ApiError> {
+        use super::schema::users;
+
+        diesel::insert_into(users::table) // insert into users table
+            .values(&dto) // use values from CreateListDTO
+            .get_result(&self.connection) // execute query
+            .map_err(|err| ApiError::from_diesel_err(err, "while creating user"))
+        // if error occurred map it to ApiError
+    }
+
+    /// retrieve one user from the db
+    pub fn get_user_by_email(&self, by_email: String) -> Result<User, ApiError> {
+        use super::schema::users::dsl::*;
+
+        match users
+            .filter(email.eq(by_email))
+            .first::<User>(&self.connection)
+        {
+            Ok(user) => return Ok(user),
+            Err(err) => {
+                return Err(ApiError::from_diesel_err(err, "while loading user"));
+            }
+        }
     }
 
     pub fn create_list(&self, dto: CreateList) -> Result<List, ApiError> {

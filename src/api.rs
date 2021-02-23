@@ -7,6 +7,7 @@ use serde_derive::{Deserialize, Serialize};
 // Api List Wrapper Struct
 #[derive(Debug, Deserialize, Clone)]
 pub struct AddList {
+    pub user_id: i64,
     pub title: String,
     pub subtitle: String,
 }
@@ -14,6 +15,7 @@ pub struct AddList {
 impl AddList {
     pub fn to_dto(&self) -> CreateList {
         CreateList {
+            user_id: self.user_id.clone(),
             title: self.title.clone(),
             subtitle: self.subtitle.clone(),
         }

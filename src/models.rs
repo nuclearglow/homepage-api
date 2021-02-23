@@ -1,12 +1,34 @@
+use serde_derive::{Deserialize, Serialize};
+
 use crate::schema::items;
 use crate::schema::lists;
+use crate::schema::users;
 
-use serde_derive::Serialize;
+/// Users
 
 #[derive(Serialize, Debug, Clone, Queryable, Identifiable)]
+#[table_name = "users"]
+pub struct User {
+    pub id: i64,
+    pub nick: String,
+    pub email: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Insertable)]
+#[table_name = "users"]
+pub struct CreateUser {
+    pub nick: String,
+    pub email: String,
+}
+
+/// Lists
+
+#[derive(Serialize, Debug, Clone, Queryable, Identifiable, Associations)]
+#[belongs_to(User)]
 #[table_name = "lists"]
 pub struct List {
     pub id: i64,
+    pub user_id: i64,
     pub title: String,
     pub subtitle: String,
 }
@@ -14,9 +36,12 @@ pub struct List {
 #[derive(Debug, Clone, Insertable)]
 #[table_name = "lists"]
 pub struct CreateList {
+    pub user_id: i64,
     pub title: String,
     pub subtitle: String,
 }
+
+/// Items
 
 #[derive(Serialize, Debug, Clone, Queryable, Identifiable, Associations)]
 #[belongs_to(List)]
