@@ -38,7 +38,7 @@ pub async fn register(
         .register(register_data.user, register_data.credentials, db_manager)
         .await;
     match response {
-        Ok(result) => return respond(Ok(result), warp::http::StatusCode::OK),
+        Ok(user_id) => return respond(Ok(user_id), warp::http::StatusCode::OK),
         Err(err) => {
             return respond(
                 Err(ApiError::from_webauthn_error(err, "register")),

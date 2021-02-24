@@ -34,6 +34,7 @@ impl WebauthnActor {
         }
     }
 
+    // register returns the registered user's database id -> needed for creation of a list
     pub async fn challenge_register(
         &self,
         nick: String,
@@ -53,15 +54,13 @@ impl WebauthnActor {
         user: CreateUser,
         reg: RegisterPublicKeyCredential,
         db_manager: db::DBManager,
-    ) -> WebauthnResult<()> {
-        log::debug!(
+    ) -> WebauthnResult<i64> {
+        log::info!(
             "handle Register -> (nick: {:?}, email: {:?}, reg: {:?})",
             user.nick,
             user.email,
             reg
         );
-
-        // TODO: register needs to return the user's id -> for creation of the list
 
         // check if a user with this email already exists in the database
         let result = db_manager.get_user_by_email(user.email.clone());
@@ -71,15 +70,12 @@ impl WebauthnActor {
                 // if not, create a new user with the username
                 match db_manager.create_user(user.clone()) {
                     Ok(new_user) => new_user,
-                    Err(_) => panic!(
-                        "Database Error: Could not create new user {} ({})",
-                        user.nick, user.email
-                    ),
+                    Err(_) => Err(WebauthnError::InvalidUsername)?,
                 }
             }
         };
 
-        let username = registered_user.nick.as_bytes().to_vec();
+        let username = user.nick.as_bytes().to_vec();
 
         let rs = self
             .reg_chals
@@ -114,7 +110,9 @@ impl WebauthnActor {
             }
         };
 
-        log::debug!("complete Register -> {:?}", r);
-        return r;
+        log::info!("completed Register -> {:?}", r);
+        log::info!("completed Register for user {:?}", registered_user);
+
+        return Ok(registered_user.id);
     }
 }
