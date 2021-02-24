@@ -48,6 +48,24 @@ pub async fn register(
     }
 }
 
+pub async fn challenge_login(
+    nick: String,
+    actor: Arc<WebauthnActor>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    log::info!("handling challenge login");
+
+    let response = actor.challenge_authenticate(&nick).await;
+    match response {
+        Ok(challenge) => return respond(Ok(challenge), warp::http::StatusCode::OK),
+        Err(err) => {
+            return respond(
+                Err(ApiError::from_webauthn_error(err, "challenge login")),
+                warp::http::StatusCode::UNAUTHORIZED,
+            )
+        }
+    }
+}
+
 fn respond<T: Serialize>(
     result: Result<T, ApiError>,
     status: warp::http::StatusCode,

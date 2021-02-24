@@ -21,11 +21,11 @@ pub fn with_webauthn_actor(
     warp::any().map(move || actor.clone())
 }
 
-/// POST auth/challenge/register/<username>
+/// POST auth/challenge/register/nick
 pub fn challenge_register(
     actor: Arc<WebauthnActor>,
 ) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("challenge" / "register" / String) // Match username
+    warp::path!("challenge" / "register" / String) // Match nick
         .and(warp::post()) // Match POST method
         .and(with_webauthn_actor(actor)) // Add the actor
         .and_then(webauthn::api::challenge_register) // Use api method to handle it
@@ -36,10 +36,20 @@ pub fn register(
     pool: PgPool,
     actor: Arc<WebauthnActor>,
 ) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("register") // Match username
+    warp::path!("register")
         .and(warp::post()) // Match POST method
         .and(with_json_body::<RegisterData>()) // Try to deserialize JSON
         .and(with_webauthn_actor(actor)) // Add the actor
         .and(crate::with_db_access_manager(pool)) // Add the db Manager
         .and_then(webauthn::api::register) // Use api method to handle it
+}
+
+/// POST /auth/challenge/login/nick
+pub fn challenge_login(
+    actor: Arc<WebauthnActor>,
+) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("challenge" / "login" / String) // Match nick
+        .and(warp::post()) // Match POST method
+        .and(with_webauthn_actor(actor)) // Add the actor
+        .and_then(webauthn::api::challenge_login) // Use api method to handle it
 }

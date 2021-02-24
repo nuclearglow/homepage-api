@@ -1,8 +1,7 @@
 use crate::db;
 use crate::errors::ApiError;
 use crate::models::{CreateItem, CreateList, Item, List};
-use serde::Serialize;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 // Api List Wrapper Struct
 #[derive(Debug, Deserialize, Clone)]

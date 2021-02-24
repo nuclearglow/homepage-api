@@ -115,4 +115,28 @@ impl WebauthnActor {
 
         return Ok(registered_user.id);
     }
+
+    pub async fn challenge_authenticate(
+        &self,
+        nick: &String,
+    ) -> WebauthnResult<RequestChallengeResponse> {
+        log::info!("handle ChallengeAuthenticate -> {:?}", nick);
+
+        // TODO: get the creds from the database here
+
+        let creds = match self.creds.lock().await.get(&nick.as_bytes().to_vec()) {
+            Some(creds) => Some(creds.iter().map(|(_, v)| v.clone()).collect()),
+            None => None,
+        }
+        .ok_or(WebauthnError::CredentialRetrievalError)?;
+
+        let (acr, st) = self.wan.generate_challenge_authenticate(creds)?;
+        self.auth_chals
+            .lock()
+            .await
+            .put(nick.as_bytes().to_vec(), st);
+
+        log::debug!("complete ChallengeAuthenticate -> {:?}", acr);
+        Ok(acr)
+    }
 }

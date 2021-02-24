@@ -122,7 +122,8 @@ async fn main() {
     // Webauthn: Add path prefix /auth to all these routes
     let auth_routes = warp::path!("auth" / ..).and(
         webauthn::routes::challenge_register(actor.clone())
-            .or(webauthn::routes::register(pg_pool.clone(), actor)),
+            .or(webauthn::routes::register(pg_pool.clone(), actor.clone()))
+            .or(webauthn::routes::challenge_login(actor)),
     );
 
     // API: Add path prefix /api to all our routes
