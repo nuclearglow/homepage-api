@@ -15,11 +15,14 @@ my website rust microservice api
 docker run -p 5432:5432 --rm -e POSTGRES_PASSWORD=password postgres:12
 ```
 
-* create a `.env` file with the following contents and replace the <> and your database string:
+* create a `.env` file with the following contents or replace with your settings:
 
 ```
-SERVER_URL=<your_server_url:your_port>
+API_SERVER_URL=0.0.0.0:9090
 DATABASE_URL=postgres://postgres:password@localhost:5432/api
+WEBAUTHN_RELYING_PARTY_NAME=localhost
+WEBAUTHN_RELYING_PARTY_ORIGIN=https://localhost:8888
+WEBAUTHN_RELYING_PARTY_ID=localhost
 ```
 
 * initialize database and run migrations
@@ -28,19 +31,5 @@ DATABASE_URL=postgres://postgres:password@localhost:5432/api
 diesel setup
 ```
 
-
-# Notes
-
-* first migration was:
-
-```
-diesel migration generate create_lists
-```
-
-* Database migrations for prod:
-
-See https://diesel.rs/guides/getting-started/:
-
-When preparing your app for use in production, you may want to run your migrations during the application's initialization phase. You may also want to include the migration scripts as a part of your code, to avoid having to copy them to your deployment location/image etc.
-
-The diesel_migrations crate provides the embed_migrations! macro, allowing you to embed migration scripts in the final binary. Once your code uses it, you can simply include embedded_migrations::run(&db_conn) at the start of your main function to run migrations every time the application starts.
+* run, test some stuff using Postman: `docs/api.svenvowe.de.postman_collection.json`
+* or use the experimental frontend: https://github.com/nuclearglow/retrolist
